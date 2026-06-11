@@ -3,18 +3,28 @@ function stripLeadingZeros(numStr: string): string {
   return stripped === "" ? "0" : stripped;
 }
 
-function validateInput(numStr: string): void {
+function validateInput(numStr: string): string {
   if (numStr.length === 0) {
     throw new Error("Input must be a non-empty digit string");
   }
-  if (!/^[0-9]+$/.test(numStr)) {
-    throw new Error("Input must contain only digits");
+
+  // Allow commas as thousands separators; strip them for further validation
+  const sanitized = numStr.replace(/,/g, "").trim();
+
+  if (sanitized.length === 0) {
+    throw new Error("Input must contain digits");
   }
+
+  if (!/^[0-9]+$/.test(sanitized)) {
+    throw new Error("Input must contain only digits and optional commas");
+  }
+
+  return sanitized;
 }
 
 export function groupDigits(numStr: string): string[] {
-  validateInput(numStr);
-  const normalized = stripLeadingZeros(numStr);
+  const sanitized = validateInput(numStr);
+  const normalized = stripLeadingZeros(sanitized);
   if (normalized === "0") {
     return ["0"];
   }

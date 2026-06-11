@@ -1,12 +1,13 @@
 import { groupDigits } from "../src/lib/groupDigits";
 
+// Basic cases including commas handling
 const cases: Array<[string, string[]]> = [
   ["0", ["0"]],
   ["7", ["7"]],
   ["123", ["123"]],
   ["1234", ["1", "234"]],
   ["1234567", ["1", "234", "567"]],
-  ["123456789", ["123", "456", "789"]],
+  ["1,234,567", ["1", "234", "567"]],
   ["1000", ["1", "000"]],
   ["007", ["7"]],
   ["000", ["0"]],
@@ -22,9 +23,10 @@ for (const [input, expected] of cases) {
   }
 }
 
+// Invalid cases should throw with expected messages
 const invalidCases: Array<[string, string]> = [
   ["", "Input must be a non-empty digit string"],
-  ["12a4", "Input must contain only digits"],
+  ["12a4", "Input must contain only digits and optional commas"],
 ];
 
 for (const [input, expectedMessage] of invalidCases) {
@@ -42,6 +44,7 @@ for (const [input, expectedMessage] of invalidCases) {
   }
 }
 
+// Large input sanity check
 const longInput = "1".repeat(100);
 const longResult = groupDigits(longInput);
 if (longResult.length !== 34) {

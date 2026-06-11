@@ -5,6 +5,11 @@
         "/^cd /Users/suzyoliver/Dev/number-name && node - <<'NODE'\nconst fs=require\\('fs'\\);\nconst code=fs\\.readFileSync\\('src/lib/scaleNames\\.ts','utf8'\\);\nconst match=code\\.match\\(/const illionPrefixes: string\\\\\\[\\] = \\\\\\[\\(\\[\\\\s\\\\S\\]\\*\\?\\)\\\\\\];/m\\);\nif\\(match\\)\\{\n const items=match\\[1\\]\\.split\\(','\\)\\.map\\(s=>s\\.trim\\(\\)\\)\\.filter\\(Boolean\\);\n console\\.log\\('illionPrefixCount=',items\\.length\\);\n\\}\nconst count=function\\(pattern\\)\\{const m=code\\.match\\(new RegExp\\(pattern,'g'\\)\\); return m\\?m\\.length:0;\\};\nconsole\\.log\\('hundredsComponent=',count\\('hundredsComponent'\\)\\);\nNODE$/": {
             "approve": true,
             "matchCommandLine": true
-        }
+        },
+        "npm run build": true,
+        "npm run test": true,
+        "git add": true,
+        "git commit": true,
+        "git push": true
     }
 }

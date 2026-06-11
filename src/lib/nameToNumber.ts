@@ -44,6 +44,10 @@ function parseWordValue(word: string): bigint | null {
 }
 
 export function nameToNumber(nameStr: string): string {
+  if (!/^[A-Za-z\s-]+$/.test(nameStr)) {
+    throw new Error("Input must contain only letters, spaces, and hyphens");
+  }
+
   const normalized = normalizeInput(nameStr);
   if (normalized.length === 0) {
     throw new Error("Input must be a non-empty number name");
@@ -80,7 +84,7 @@ export function nameToNumber(nameStr: string): string {
 
     if (value === 100n) {
       if (currentGroup === 0n) {
-        throw new Error("Invalid number name structure: 'hundred' must follow a digit");
+        throw new Error("Invalid number name structure: 'hundred' must follow a digit name");
       }
       currentGroup *= 100n;
       continue;

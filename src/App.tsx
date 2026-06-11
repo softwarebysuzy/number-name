@@ -85,7 +85,9 @@ const App = () => {
               if (!isEmpty(nameValue)) {
                 setNameValue("");
               }
-              setNumberValue(event.target.value);
+              // Allow only digits and commas
+              const filtered = event.target.value.replace(/[^0-9,]/g, "");
+              setNumberValue(filtered);
             }}
             placeholder="1234 or 1,234"
             rows={4}
@@ -100,7 +102,9 @@ const App = () => {
               if (!isEmpty(numberValue)) {
                 setNumberValue("");
               }
-              setNameValue(event.target.value);
+              // Allow only letters, spaces, and hyphens
+              const filtered = event.target.value.replace(/[^A-Za-z\s-]/g, "");
+              setNameValue(filtered);
             }}
             placeholder="one thousand two hundred thirty-four"
             rows={8}
