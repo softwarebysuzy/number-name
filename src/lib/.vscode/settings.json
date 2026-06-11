@@ -10,6 +10,9 @@
         "npm run test": true,
         "git add": true,
         "git commit": true,
-        "git push": true
+        "git push": true,
+        "true": true,
+        "env": true,
+        "git config": true
     }
 }
