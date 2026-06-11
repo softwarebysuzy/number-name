@@ -95,23 +95,23 @@ button {
   padding: 12px 20px;
   font-size: 1rem;
   font-weight: 600;
-  background: #4f46e5;
+  background: #6633cc;
   color: white;
   transition: transform 0.15s ease, background 0.15s ease;
 }
 
 button:hover {
   transform: translateY(-1px);
-  background: #4338ca;
+  background: #5629b3;
 }
 
 button.secondary {
-  background: #f3f4f6;
-  color: #111827;
+  background: #006699;
+  color: white;
 }
 
 button.secondary:hover {
-  background: #e5e7eb;
+  background: #00557a;
 }
 
 .header-banner {
