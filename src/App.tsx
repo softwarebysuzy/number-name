@@ -1,4 +1,5 @@
 import { useState } from "react";
+import headerImage from "./lib/SoftwareBySuzyBanner2 youtube copy.jpg";
 import { numberToName } from "./lib/numberToName";
 import { nameToNumber } from "./lib/nameToNumber";
 
@@ -74,6 +75,7 @@ const App = () => {
   return (
     <div className="app-shell">
       <div className="panel">
+        <img src={headerImage} alt="Software by Suzy banner" className="header-banner" />
         <h1>Number Name Converter</h1>
         <p className="instructions">Enter an integer in one of the fields below (3003 digits max).</p>
         <form onSubmit={handleSubmit} className="form-grid">
@@ -120,6 +122,7 @@ const App = () => {
         </form>
 
         {message && <div className="message">{message}</div>}
+        <div className="footer-note">Copyright 2026 Software by Suzy</div>
       </div>
     </div>
   );
