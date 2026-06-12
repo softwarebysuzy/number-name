@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import headerImage from "./lib/SoftwareBySuzyBanner2.jpg";
 import { numberToName } from "./lib/numberToName";
 import { nameToNumber } from "./lib/nameToNumber";
 import { scNotationToName, scNotationToNumber } from "./lib/scNotation";
 import { numberToSCNotation } from "./lib/numberToSC";
+import { numberToRomanNumerals } from "./lib/numberToRomanNumerals";
+import { romanToNumber } from "./lib/romanToNumber";
 
 function formatNumberWithCommas(value: string): string {
   return value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -29,7 +31,11 @@ const App = () => {
   const [numberValue, setNumberValue] = useState("");
   const [nameValue, setNameValue] = useState("");
   const [scNotationValue, setScNotationValue] = useState("");
+  const [romanValue, setRomanValue] = useState("");
   const [message, setMessage] = useState("");
+  const romanRef = useRef<HTMLTextAreaElement | null>(null);
+  const OVERLINE = "\u0305";
+  const [romanHelp, setRomanHelp] = useState("Enter Roman numerals in the Roman field. Select a contiguous Roman substring and press Insert overline to apply a ×1,000 vinculum.");
 
   const handleSubmit = (event?: React.FormEvent<HTMLFormElement> | null) => {
     if (event && typeof event.preventDefault === "function") {
@@ -40,13 +46,14 @@ const App = () => {
     const hasNumber = !isEmpty(numberValue);
     const hasName = !isEmpty(nameValue);
     const hasScNotation = !isEmpty(scNotationValue);
+    const hasRoman = !isEmpty(romanValue);
 
-    if (!hasNumber && !hasName && !hasScNotation) {
-      setMessage("Enter a number, a number name, or scientific notation to convert.");
+    if (!hasNumber && !hasName && !hasScNotation && !hasRoman) {
+      setMessage("Enter a number, a number name, scientific notation, or Roman numerals to convert.");
       return;
     }
 
-    const filledFields = [hasNumber, hasName, hasScNotation].filter(Boolean).length;
+    const filledFields = [hasNumber, hasName, hasScNotation, hasRoman].filter(Boolean).length;
     if (filledFields > 1) {
       setMessage("Please fill only one field at a time.");
       return;
@@ -60,22 +67,63 @@ const App = () => {
         }
         const convertedName = numberToName(normalized);
         const sc = numberToSCNotation(normalized);
+        let roman = "";
+        try {
+          roman = numberToRomanNumerals(normalized);
+        } catch (innerError) {
+          if (innerError instanceof Error) {
+            setMessage(innerError.message);
+          } else {
+            setMessage("Roman numerals conversion failed.");
+          }
+        }
         setNameValue(convertedName);
         setScNotationValue(sc);
+        setRomanValue(roman);
         setNumberValue(formatNumberWithCommas(normalized));
       } else if (hasName) {
         const normalizedName = normalizeNameInput(nameValue);
         const convertedNumber = nameToNumber(normalizedName);
         const sc = numberToSCNotation(convertedNumber);
+        let roman = "";
+        try {
+          roman = numberToRomanNumerals(convertedNumber);
+        } catch (innerError) {
+          if (innerError instanceof Error) {
+            setMessage(innerError.message);
+          } else {
+            setMessage("Roman numerals conversion failed.");
+          }
+        }
         setNumberValue(formatNumberWithCommas(convertedNumber));
         setScNotationValue(sc);
+        setRomanValue(roman);
         setNameValue(nameValue.trim());
+      } else if (hasRoman) {
+        const convertedNumber = romanToNumber(romanValue);
+        const sc = numberToSCNotation(convertedNumber);
+        const convertedName = numberToName(convertedNumber);
+        setNumberValue(formatNumberWithCommas(convertedNumber));
+        setScNotationValue(sc);
+        setNameValue(convertedName);
+        setRomanValue(romanValue.trim());
       } else {
         const normalized = normalizeScNotationInput(scNotationValue);
         const convertedNumber = scNotationToNumber(normalized);
         const convertedName = scNotationToName(normalized);
+        let roman = "";
+        try {
+          roman = numberToRomanNumerals(convertedNumber);
+        } catch (innerError) {
+          if (innerError instanceof Error) {
+            setMessage(innerError.message);
+          } else {
+            setMessage("Roman numerals conversion failed.");
+          }
+        }
         setNumberValue(formatNumberWithCommas(convertedNumber));
         setNameValue(convertedName);
+        setRomanValue(roman);
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -86,17 +134,70 @@ const App = () => {
     }
   };
 
+  const handleRomanInput = (value: string) => {
+    if (!isEmpty(numberValue) || !isEmpty(nameValue) || !isEmpty(scNotationValue)) {
+      setNumberValue("");
+      setNameValue("");
+      setScNotationValue("");
+      setMessage("");
+    }
+
+    const filtered = value.toUpperCase().replace(/[^IVXLCDM\u0305\s]/g, "");
+    setRomanValue(filtered);
+  };
+
+  const insertRomanOverline = () => {
+    if (!isEmpty(numberValue) || !isEmpty(nameValue) || !isEmpty(scNotationValue)) {
+      setNumberValue("");
+      setNameValue("");
+      setScNotationValue("");
+      setMessage("");
+    }
+
+    const el = romanRef.current;
+    if (!el) return;
+
+    const start = el.selectionStart ?? el.value.length;
+    const end = el.selectionEnd ?? start;
+    if (start === end) {
+      setMessage("Select a Roman substring to overline.");
+      return;
+    }
+
+    const value = el.value;
+    const selected = value.slice(start, end);
+    const cleaned = selected.replace(new RegExp(OVERLINE, "g"), "");
+    if (cleaned.length === 0) {
+      setMessage("Select a Roman substring to overline.");
+      return;
+    }
+
+    const before = value.slice(0, start);
+    const after = value.slice(end);
+    const overlined = cleaned.split("").map((ch) => ch + OVERLINE).join("");
+    const nextValue = before + overlined + after;
+    setRomanValue(nextValue);
+    setMessage("");
+    requestAnimationFrame(() => {
+      el.focus();
+      const pos = before.length + overlined.length;
+      el.setSelectionRange(pos, pos);
+    });
+  };
+
   const handleClear = () => {
     setNumberValue("");
     setNameValue("");
     setScNotationValue("");
+    setRomanValue("");
     setMessage("");
   };
 
   const handleNumberInput = (value: string) => {
-    if (!isEmpty(nameValue) || !isEmpty(scNotationValue)) {
+    if (!isEmpty(nameValue) || !isEmpty(scNotationValue) || !isEmpty(romanValue)) {
       setNameValue("");
       setScNotationValue("");
+      setRomanValue("");
       setMessage("");
     }
 
@@ -105,9 +206,10 @@ const App = () => {
   };
 
   const handleNameInput = (value: string) => {
-    if (!isEmpty(numberValue) || !isEmpty(scNotationValue)) {
+    if (!isEmpty(numberValue) || !isEmpty(scNotationValue) || !isEmpty(romanValue)) {
       setNumberValue("");
       setScNotationValue("");
+      setRomanValue("");
       setMessage("");
     }
 
@@ -116,9 +218,10 @@ const App = () => {
   };
 
   const handleScNotationInput = (value: string) => {
-    if (!isEmpty(numberValue) || !isEmpty(nameValue)) {
+    if (!isEmpty(numberValue) || !isEmpty(nameValue) || !isEmpty(romanValue)) {
       setNumberValue("");
       setNameValue("");
+      setRomanValue("");
       setMessage("");
     }
 
@@ -205,10 +308,31 @@ const App = () => {
           />
           <p className="field-note">Format: one digit, a decimal point, digits after the decimal, optional spaces around E, and an unsigned exponent.</p>
 
+          <label htmlFor="romanInput">Roman Numerals</label>
+          <textarea
+            id="romanInput"
+            value={romanValue}
+            ref={romanRef}
+            onChange={(event) => handleRomanInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                handleSubmit(null);
+              }
+            }}
+            placeholder="e.g. IV or V̅ (overline = \u0305)"
+            rows={2}
+            className="scrollable"
+          />
+          <p className="field-note">{romanHelp}</p>
+
           <div className="button-row">
             <button type="submit">Submit</button>
             <button type="button" onClick={handleClear} className="secondary">
               Clear
+            </button>
+            <button type="button" onClick={insertRomanOverline} className="overline-button">
+              Insert overline
             </button>
           </div>
         </form>

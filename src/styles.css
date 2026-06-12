@@ -120,6 +120,15 @@ button.secondary:hover {
   background: #00557a;
 }
 
+button.overline-button {
+  background: #660033;
+  color: white;
+}
+
+button.overline-button:hover {
+  background: #550029;
+}
+
 .header-banner {
   width: 100%;
   max-height: 180px;
