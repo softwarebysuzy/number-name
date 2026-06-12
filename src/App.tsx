@@ -2,6 +2,8 @@ import { useState } from "react";
 import headerImage from "./lib/SoftwareBySuzyBanner2.jpg";
 import { numberToName } from "./lib/numberToName";
 import { nameToNumber } from "./lib/nameToNumber";
+import { scNotationToName, scNotationToNumber } from "./lib/scNotation";
+import { numberToSCNotation } from "./lib/numberToSC";
 
 function formatNumberWithCommas(value: string): string {
   return value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -19,26 +21,33 @@ function normalizeNameInput(value: string): string {
   return value.trim().toLowerCase();
 }
 
+function normalizeScNotationInput(value: string): string {
+  return value.trim();
+}
+
 const App = () => {
   const [numberValue, setNumberValue] = useState("");
   const [nameValue, setNameValue] = useState("");
+  const [scNotationValue, setScNotationValue] = useState("");
   const [message, setMessage] = useState("");
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSubmit = (event?: React.FormEvent<HTMLFormElement> | null) => {
+    if (event && typeof event.preventDefault === "function") {
+      event.preventDefault();
+    }
     setMessage("");
 
     const hasNumber = !isEmpty(numberValue);
     const hasName = !isEmpty(nameValue);
+    const hasScNotation = !isEmpty(scNotationValue);
 
-    if (!hasNumber && !hasName) {
-      setMessage("Enter a number or a number name to convert.");
+    if (!hasNumber && !hasName && !hasScNotation) {
+      setMessage("Enter a number, a number name, or scientific notation to convert.");
       return;
     }
 
-    if (hasNumber && hasName) {
-      setNumberValue("");
-      setNameValue("");
+    const filledFields = [hasNumber, hasName, hasScNotation].filter(Boolean).length;
+    if (filledFields > 1) {
       setMessage("Please fill only one field at a time.");
       return;
     }
@@ -46,16 +55,27 @@ const App = () => {
     try {
       if (hasNumber) {
         const normalized = stripCommas(numberValue);
+        if (!/^[0-9]+$/.test(normalized)) {
+          throw new Error("Number must contain only digits and commas.");
+        }
         const convertedName = numberToName(normalized);
+        const sc = numberToSCNotation(normalized);
         setNameValue(convertedName);
+        setScNotationValue(sc);
         setNumberValue(formatNumberWithCommas(normalized));
-        setMessage("");
-      } else {
-        const normalized = normalizeNameInput(nameValue);
-        const convertedNumber = nameToNumber(normalized);
+      } else if (hasName) {
+        const normalizedName = normalizeNameInput(nameValue);
+        const convertedNumber = nameToNumber(normalizedName);
+        const sc = numberToSCNotation(convertedNumber);
         setNumberValue(formatNumberWithCommas(convertedNumber));
+        setScNotationValue(sc);
         setNameValue(nameValue.trim());
-        setMessage("");
+      } else {
+        const normalized = normalizeScNotationInput(scNotationValue);
+        const convertedNumber = scNotationToNumber(normalized);
+        const convertedName = scNotationToName(normalized);
+        setNumberValue(formatNumberWithCommas(convertedNumber));
+        setNameValue(convertedName);
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -69,7 +89,51 @@ const App = () => {
   const handleClear = () => {
     setNumberValue("");
     setNameValue("");
+    setScNotationValue("");
     setMessage("");
+  };
+
+  const handleNumberInput = (value: string) => {
+    if (!isEmpty(nameValue) || !isEmpty(scNotationValue)) {
+      setNameValue("");
+      setScNotationValue("");
+      setMessage("");
+    }
+
+    const filtered = value.replace(/[^0-9,]/g, "");
+    setNumberValue(filtered);
+  };
+
+  const handleNameInput = (value: string) => {
+    if (!isEmpty(numberValue) || !isEmpty(scNotationValue)) {
+      setNumberValue("");
+      setScNotationValue("");
+      setMessage("");
+    }
+
+    const filtered = value.replace(/[^A-Za-z\s-]/g, "");
+    setNameValue(filtered);
+  };
+
+  const handleScNotationInput = (value: string) => {
+    if (!isEmpty(numberValue) || !isEmpty(nameValue)) {
+      setNumberValue("");
+      setNameValue("");
+      setMessage("");
+    }
+
+    const raw = value;
+    let filtered = raw.replace(/[^0-9Ee.\s]/g, "");
+
+    const ePos = Math.max(filtered.indexOf("E"), filtered.indexOf("e"));
+    let beforeE = ePos === -1 ? filtered : filtered.slice(0, ePos);
+    const afterE = ePos === -1 ? "" : filtered.slice(ePos);
+    const firstDot = beforeE.indexOf(".");
+    if (firstDot !== -1) {
+      beforeE = beforeE.slice(0, firstDot + 1) + beforeE.slice(firstDot + 1).replace(/\./g, "");
+    }
+    filtered = beforeE + afterE;
+    setScNotationValue(filtered);
   };
 
   return (
@@ -83,13 +147,12 @@ const App = () => {
           <textarea
             id="numberInput"
             value={numberValue}
-            onChange={(event) => {
-              if (!isEmpty(nameValue)) {
-                setNameValue("");
+            onChange={(event) => handleNumberInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                handleSubmit(null);
               }
-              // Allow only digits and commas
-              const filtered = event.target.value.replace(/[^0-9,]/g, "");
-              setNumberValue(filtered);
             }}
             placeholder="1234 or 1,234"
             rows={4}
@@ -100,18 +163,47 @@ const App = () => {
           <textarea
             id="nameInput"
             value={nameValue}
-            onChange={(event) => {
-              if (!isEmpty(numberValue)) {
-                setNumberValue("");
+            onChange={(event) => handleNameInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                handleSubmit(null);
               }
-              // Allow only letters, spaces, and hyphens
-              const filtered = event.target.value.replace(/[^A-Za-z\s-]/g, "");
-              setNameValue(filtered);
             }}
             placeholder="one thousand two hundred thirty-four"
             rows={8}
             className="scrollable"
           />
+
+          <label htmlFor="scNotationInput">Scientific Notation</label>
+          <textarea
+            id="scNotationInput"
+            value={scNotationValue}
+            onChange={(event) => handleScNotationInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === ".") {
+                const current = (event.target as HTMLTextAreaElement).value;
+                const eIndex = Math.max(current.indexOf("E"), current.indexOf("e"));
+                const beforeE = eIndex === -1 ? current : current.slice(0, eIndex);
+                if (beforeE.includes(".")) {
+                  event.preventDefault();
+                }
+              }
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                handleSubmit(null);
+              }
+            }}
+            onPaste={(event) => {
+              event.preventDefault();
+              const paste = event.clipboardData?.getData("text") || "";
+              handleScNotationInput(paste);
+            }}
+            placeholder="1.23456789 E 147"
+            rows={3}
+            className="scrollable"
+          />
+          <p className="field-note">Format: one digit, a decimal point, digits after the decimal, optional spaces around E, and an unsigned exponent.</p>
 
           <div className="button-row">
             <button type="submit">Submit</button>

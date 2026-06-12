@@ -74,6 +74,12 @@ textarea::placeholder {
 textarea {
   resize: vertical;
   overflow: auto;
+  min-height: 3.5rem;
+  max-height: 9rem;
+}
+
+textarea.scrollable {
+  overflow: auto;
 }
 
 input:focus,
@@ -129,6 +135,13 @@ button.secondary:hover {
   background: #fef3c7;
   color: #92400e;
   border: 1px solid #fde68a;
+}
+
+.field-note {
+  margin: -12px 0 12px;
+  color: #4b5563;
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 .footer-note {
