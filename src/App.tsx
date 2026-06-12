@@ -1,5 +1,5 @@
 import { useState } from "react";
-import headerImage from "./lib/SoftwareBySuzyBanner2 youtube copy.jpg";
+import headerImage from "./lib/SoftwareBySuzyBanner2.jpg";
 import { numberToName } from "./lib/numberToName";
 import { nameToNumber } from "./lib/nameToNumber";
 
