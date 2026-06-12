@@ -32,7 +32,7 @@ expectEqual(
 );
 
 expectThrows(() => numberToRomanNumerals("0"), "Roman numerals cannot represent zero");
-expectThrows(() => numberToRomanNumerals("4000000"), "Maximum supported value is 3,999,999");
+expectThrows(() => numberToRomanNumerals("4000000"), "Maximum supported Roman numeral value is 3,999,999");
 expectThrows(() => numberToRomanNumerals("12.3"), "Input must be an integer digit string");
 expectThrows(() => numberToRomanNumerals("abc"), "Input must be an integer digit string");
 

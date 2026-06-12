@@ -1,0 +1,11 @@
+import "./groupDigits.test";
+import "./groupToWords.test";
+import "./hex.test";
+import "./nameToNumber.test";
+import "./numberToName.test";
+import "./numberToRomanNumerals.test";
+import "./numberToSC.test";
+import "./numberWords.test";
+import "./romanToNumber.test";
+import "./scaleNames.test";
+import "./scNotation.test";

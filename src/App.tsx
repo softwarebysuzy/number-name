@@ -5,6 +5,7 @@ import { nameToNumber } from "./lib/nameToNumber";
 import { scNotationToName, scNotationToNumber } from "./lib/scNotation";
 import { numberToSCNotation } from "./lib/numberToSC";
 import { numberToRomanNumerals } from "./lib/numberToRomanNumerals";
+import { numberToHex, hexToNumber } from "./lib/hex";
 import { romanToNumber } from "./lib/romanToNumber";
 
 function formatNumberWithCommas(value: string): string {
@@ -31,11 +32,12 @@ const App = () => {
   const [numberValue, setNumberValue] = useState("");
   const [nameValue, setNameValue] = useState("");
   const [scNotationValue, setScNotationValue] = useState("");
+  const [hexValue, setHexValue] = useState("");
   const [romanValue, setRomanValue] = useState("");
   const [message, setMessage] = useState("");
   const romanRef = useRef<HTMLTextAreaElement | null>(null);
   const OVERLINE = "\u0305";
-  const [romanHelp, setRomanHelp] = useState("Enter Roman numerals in the Roman field. Select a contiguous Roman substring and press Insert overline to apply a ×1,000 vinculum.");
+  const [romanHelp, setRomanHelp] = useState("Enter Roman numerals in the Roman field. Select a contiguous Roman substring and press Overline to apply a ×1,000 vinculum.");
 
   const handleSubmit = (event?: React.FormEvent<HTMLFormElement> | null) => {
     if (event && typeof event.preventDefault === "function") {
@@ -46,14 +48,15 @@ const App = () => {
     const hasNumber = !isEmpty(numberValue);
     const hasName = !isEmpty(nameValue);
     const hasScNotation = !isEmpty(scNotationValue);
+    const hasHex = !isEmpty(hexValue);
     const hasRoman = !isEmpty(romanValue);
 
-    if (!hasNumber && !hasName && !hasScNotation && !hasRoman) {
-      setMessage("Enter a number, a number name, scientific notation, or Roman numerals to convert.");
+    if (!hasNumber && !hasName && !hasScNotation && !hasHex && !hasRoman) {
+      setMessage("Enter a number, a number name, scientific notation, hexadecimal, or Roman numerals to convert.");
       return;
     }
 
-    const filledFields = [hasNumber, hasName, hasScNotation, hasRoman].filter(Boolean).length;
+    const filledFields = [hasNumber, hasName, hasScNotation, hasHex, hasRoman].filter(Boolean).length;
     if (filledFields > 1) {
       setMessage("Please fill only one field at a time.");
       return;
@@ -67,6 +70,7 @@ const App = () => {
         }
         const convertedName = numberToName(normalized);
         const sc = numberToSCNotation(normalized);
+        const hex = numberToHex(normalized);
         let roman = "";
         try {
           roman = numberToRomanNumerals(normalized);
@@ -79,12 +83,14 @@ const App = () => {
         }
         setNameValue(convertedName);
         setScNotationValue(sc);
+        setHexValue(hex);
         setRomanValue(roman);
         setNumberValue(formatNumberWithCommas(normalized));
       } else if (hasName) {
         const normalizedName = normalizeNameInput(nameValue);
         const convertedNumber = nameToNumber(normalizedName);
         const sc = numberToSCNotation(convertedNumber);
+        const hex = numberToHex(convertedNumber);
         let roman = "";
         try {
           roman = numberToRomanNumerals(convertedNumber);
@@ -97,20 +103,43 @@ const App = () => {
         }
         setNumberValue(formatNumberWithCommas(convertedNumber));
         setScNotationValue(sc);
+        setHexValue(hex);
         setRomanValue(roman);
         setNameValue(nameValue.trim());
+      } else if (hasHex) {
+        const convertedNumber = hexToNumber(hexValue);
+        const sc = numberToSCNotation(convertedNumber);
+        const convertedName = numberToName(convertedNumber);
+        let roman = "";
+        try {
+          roman = numberToRomanNumerals(convertedNumber);
+        } catch (innerError) {
+          if (innerError instanceof Error) {
+            setMessage(innerError.message);
+          } else {
+            setMessage("Roman numerals conversion failed.");
+          }
+        }
+        setNumberValue(formatNumberWithCommas(convertedNumber));
+        setScNotationValue(sc);
+        setNameValue(convertedName);
+        setRomanValue(roman);
+        setHexValue(hexValue.trim().toUpperCase());
       } else if (hasRoman) {
         const convertedNumber = romanToNumber(romanValue);
         const sc = numberToSCNotation(convertedNumber);
         const convertedName = numberToName(convertedNumber);
+        const hex = numberToHex(convertedNumber);
         setNumberValue(formatNumberWithCommas(convertedNumber));
         setScNotationValue(sc);
         setNameValue(convertedName);
+        setHexValue(hex);
         setRomanValue(romanValue.trim());
       } else {
         const normalized = normalizeScNotationInput(scNotationValue);
         const convertedNumber = scNotationToNumber(normalized);
         const convertedName = scNotationToName(normalized);
+        const hex = numberToHex(convertedNumber);
         let roman = "";
         try {
           roman = numberToRomanNumerals(convertedNumber);
@@ -123,6 +152,7 @@ const App = () => {
         }
         setNumberValue(formatNumberWithCommas(convertedNumber));
         setNameValue(convertedName);
+        setHexValue(hex);
         setRomanValue(roman);
       }
     } catch (error) {
@@ -135,10 +165,11 @@ const App = () => {
   };
 
   const handleRomanInput = (value: string) => {
-    if (!isEmpty(numberValue) || !isEmpty(nameValue) || !isEmpty(scNotationValue)) {
+    if (!isEmpty(numberValue) || !isEmpty(nameValue) || !isEmpty(scNotationValue) || !isEmpty(hexValue)) {
       setNumberValue("");
       setNameValue("");
       setScNotationValue("");
+      setHexValue("");
       setMessage("");
     }
 
@@ -147,10 +178,11 @@ const App = () => {
   };
 
   const insertRomanOverline = () => {
-    if (!isEmpty(numberValue) || !isEmpty(nameValue) || !isEmpty(scNotationValue)) {
+    if (!isEmpty(numberValue) || !isEmpty(nameValue) || !isEmpty(scNotationValue) || !isEmpty(hexValue)) {
       setNumberValue("");
       setNameValue("");
       setScNotationValue("");
+      setHexValue("");
       setMessage("");
     }
 
@@ -189,15 +221,17 @@ const App = () => {
     setNumberValue("");
     setNameValue("");
     setScNotationValue("");
+    setHexValue("");
     setRomanValue("");
     setMessage("");
   };
 
   const handleNumberInput = (value: string) => {
-    if (!isEmpty(nameValue) || !isEmpty(scNotationValue) || !isEmpty(romanValue)) {
+    if (!isEmpty(nameValue) || !isEmpty(scNotationValue) || !isEmpty(romanValue) || !isEmpty(hexValue)) {
       setNameValue("");
       setScNotationValue("");
       setRomanValue("");
+      setHexValue("");
       setMessage("");
     }
 
@@ -206,10 +240,11 @@ const App = () => {
   };
 
   const handleNameInput = (value: string) => {
-    if (!isEmpty(numberValue) || !isEmpty(scNotationValue) || !isEmpty(romanValue)) {
+    if (!isEmpty(numberValue) || !isEmpty(scNotationValue) || !isEmpty(romanValue) || !isEmpty(hexValue)) {
       setNumberValue("");
       setScNotationValue("");
       setRomanValue("");
+      setHexValue("");
       setMessage("");
     }
 
@@ -218,10 +253,11 @@ const App = () => {
   };
 
   const handleScNotationInput = (value: string) => {
-    if (!isEmpty(numberValue) || !isEmpty(nameValue) || !isEmpty(romanValue)) {
+    if (!isEmpty(numberValue) || !isEmpty(nameValue) || !isEmpty(romanValue) || !isEmpty(hexValue)) {
       setNumberValue("");
       setNameValue("");
       setRomanValue("");
+      setHexValue("");
       setMessage("");
     }
 
@@ -239,12 +275,25 @@ const App = () => {
     setScNotationValue(filtered);
   };
 
+  const handleHexInput = (value: string) => {
+    if (!isEmpty(numberValue) || !isEmpty(nameValue) || !isEmpty(scNotationValue) || !isEmpty(romanValue)) {
+      setNumberValue("");
+      setNameValue("");
+      setScNotationValue("");
+      setRomanValue("");
+      setMessage("");
+    }
+
+    const filtered = value.replace(/[^0-9A-Fa-f\s.,]/g, "");
+    setHexValue(filtered);
+  };
+
   return (
     <div className="app-shell">
       <div className="panel">
         <img src={headerImage} alt="Software by Suzy banner" className="header-banner" />
         <h1>Number Name Converter</h1>
-        <p className="instructions">Enter an integer in one of the fields below (3003 digits max).</p>
+        <p className="instructions">Enter a number, number name, scientific notation, hexadecimal, or Roman numerals in one field below (3003 digits max).</p>
         <form onSubmit={handleSubmit} className="form-grid">
           <label htmlFor="numberInput">Number</label>
           <textarea
@@ -308,6 +357,23 @@ const App = () => {
           />
           <p className="field-note">Format: one digit, a decimal point, digits after the decimal, optional spaces around E, and an unsigned exponent.</p>
 
+          <label htmlFor="hexInput">Hexadecimal</label>
+          <textarea
+            id="hexInput"
+            value={hexValue}
+            onChange={(event) => handleHexInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                handleSubmit(null);
+              }
+            }}
+            placeholder="e.g. 1a3F or 1A.3F"
+            rows={2}
+            className="scrollable"
+          />
+          <p className="field-note">Enter hexadecimal digits 0-9 and A-F. Spaces, periods, and commas are ignored as visual separators.</p>
+
           <label htmlFor="romanInput">Roman Numerals</label>
           <textarea
             id="romanInput"
@@ -332,7 +398,7 @@ const App = () => {
               Clear
             </button>
             <button type="button" onClick={insertRomanOverline} className="overline-button">
-              Insert overline
+              Overline
             </button>
           </div>
         </form>
